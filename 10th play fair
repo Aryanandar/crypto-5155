@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#define SIZE 5
+void generatePlayfairMatrix(char matrix[SIZE][SIZE]) {
+    char key[] = "MFHIKUNOPQVWXYZELARGDSTBC";
+    int k = 0;
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            matrix[i][j] = key[k++];
+        }
+    }
+}
+void findPosition(char matrix[SIZE][SIZE], char ch, int *row, int *col) {
+    if (ch == 'J') ch = 'I';
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (matrix[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+void preprocessMessage(char message[], char processed[]) {
+    int len = strlen(message);
+    int k = 0;
+    for (int i = 0; i < len; i++) {
+        if (isalpha(message[i])) {
+            processed[k++] = toupper(message[i]);
+        }
+    }
+    processed[k] = '\0';
+    for (int i = 0; i < k; i += 2) {
+        if (processed[i] == processed[i+1]) {
+            for (int j = k; j > i + 1; j--) {
+                processed[j] = processed[j-1];
+            }
+            processed[i+1] = 'X';
+            k++;
+        }
+    }
+    if (k % 2 != 0) {
+        processed[k++] = 'X';
+    }
+    processed[k] = '\0';
+}
+void encryptPlayfair(char message[], char key[]) {
+    char matrix[SIZE][SIZE];
+    generatePlayfairMatrix(matrix);
+    char processed[100];
+    preprocessMessage(message, processed);
+    char ciphertext[100];
+    int len = strlen(processed);
+    int i, row1, col1, row2, col2;
+
+    for (i = 0; i < len; i += 2) {
+        findPosition(matrix, processed[i], &row1, &col1);
+        findPosition(matrix, processed[i+1], &row2, &col2);
+
+        if (row1 == row2) {
+            ciphertext[i] = matrix[row1][(col1 + 1) % SIZE];
+            ciphertext[i+1] = matrix[row2][(col2 + 1) % SIZE];
+        } else if (col1 == col2) {
+            ciphertext[i] = matrix[(row1 + 1) % SIZE][col1];
+            ciphertext[i+1] = matrix[(row2 + 1) % SIZE][col2];
+        } else {
+            ciphertext[i] = matrix[row1][col2];
+            ciphertext[i+1] = matrix[row2][col1];
+        }
+    }
+    ciphertext[len] = '\0';
+    printf("Encrypted text: %s\n", ciphertext);
+}
+int main() {
+    char message[] = "Must see you over Cadogan West. Coming at once.";
+    encryptPlayfair(message, NULL);
+    return 0;
+}
