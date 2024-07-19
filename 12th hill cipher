@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+int key[2][2] = {
+    {9, 4},
+    {5, 7}
+};
+int mod26(int x) {
+    return (x % 26 + 26) % 26;
+}
+void matrixMultiply(int a[2][2], int b[2], int result[2]) {
+    result[0] = mod26(a[0][0] * b[0] + a[0][1] * b[1]);
+    result[1] = mod26(a[1][0] * b[0] + a[1][1] * b[1]);
+}
+void preprocessPlaintext(char* plaintext, int* processed) {
+    int len = strlen(plaintext);
+    int j = 0;
+    for (int i = 0; i < len; i++) {
+        if (isalpha(plaintext[i])) {
+            processed[j++] = toupper(plaintext[i]) - 'A';
+        }
+    }
+    if (j % 2 != 0) {
+        processed[j++] = 'X' - 'A';
+    }
+    processed[j] = -1; 
+}
+void convertToText(int* numText, char* text) {
+    int i = 0;
+    while (numText[i] != -1) {
+        text[i] = numText[i] + 'A';
+        i++;
+    }
+    text[i] = '\0';
+}
+int main() {
+    char plaintext[] = "meet me at the usual place at ten rather than eight oclock";
+    int processed[100];
+    preprocessPlaintext(plaintext, processed);
+    int len = 0;
+    while (processed[len] != -1) {
+        len++;
+    }
+    int ciphertext[100];
+    char encryptedText[100];
+    for (int i = 0; i < len; i += 2) {
+        int block[2] = {processed[i], processed[i + 1]};
+        int encryptedBlock[2];
+        matrixMultiply(key, block, encryptedBlock);
+        ciphertext[i] = encryptedBlock[0];
+        ciphertext[i + 1] = encryptedBlock[1];
+    }
+    ciphertext[len] = -1; 
+    convertToText(ciphertext, encryptedText);
+    printf("Encrypted text: %s\n", encryptedText);
+    return 0;
+}
