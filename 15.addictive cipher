@@ -1,0 +1,35 @@
+#include <stdio.h>
+#include <string.h>
+#define ALPHABET_SIZE 26
+void frequencyAnalysis(char* ciphertext, int* frequencies) {
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        frequencies[i] = 0;
+    }
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            frequencies[ciphertext[i] - 'a']++;
+        }
+    }
+}
+void decrypt(char* ciphertext, int shift, char* plaintext) {
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        if (ciphertext[i] == ' ') {
+            plaintext[i] = ' ';
+            continue;
+        }
+        plaintext[i] = ((ciphertext[i] - 'a' - shift + ALPHABET_SIZE) % ALPHABET_SIZE) + 'a';
+    }
+    plaintext[strlen(ciphertext)] = '\0';
+}
+int main() {
+    char ciphertext[] = "ftue dym qtmzx";
+    int frequencies[ALPHABET_SIZE];
+    frequencyAnalysis(ciphertext, frequencies);
+    printf("Possible plaintexts:\n");
+    for (int shift = 0; shift < ALPHABET_SIZE; shift++) {
+        char plaintext[strlen(ciphertext)];
+        decrypt(ciphertext, shift, plaintext);
+        printf("Shift %2d: %s\n", shift, plaintext);
+    }
+    return 0;
+}
