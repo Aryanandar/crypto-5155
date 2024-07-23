@@ -1,0 +1,35 @@
+#include <stdio.h>
+#include <stdint.h>
+const uint8_t S_BOX[64] = {
+};
+const uint8_t P_BOX[32] = {
+};
+void generateKeys(uint64_t key, uint64_t subkeys[16]) {
+    for (int i = 0; i < 16; i++) {
+        subkeys[i] = key; 
+    }
+}
+uint32_t DES_round(uint32_t R, uint64_t K) {
+    R = S_BOX[R % 64];
+    R = P_BOX[R % 32];
+    return R ^ (uint32_t)K;
+}
+uint64_t DES_decrypt(uint64_t ciphertext, uint64_t key) {
+    uint64_t subkeys[16];
+    generateKeys(key, subkeys);
+    uint32_t L = (uint32_t)(ciphertext >> 32);
+    uint32_t R = (uint32_t)ciphertext;
+    for (int i = 15; i >= 0; i--) {
+        uint32_t temp = R;
+        R = L ^ DES_round(R, subkeys[i]);
+        L = temp;
+    }
+    return ((uint64_t)R << 32) | L;
+}
+int main() {
+    uint64_t ciphertext = 0x0123456789abcdef;
+    uint64_t key = 0x133457799bbcdff1;
+    uint64_t plaintext = DES_decrypt(ciphertext, key);
+    printf("Decrypted plaintext: %016lx\n", plaintext);
+    return 0;
+}
