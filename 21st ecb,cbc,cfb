@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <string.h>
+#define BLOCK_SIZE 8
+void xor_blocks(char *block1, char *block2, char *result) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        result[i] = block1[i] ^ block2[i];
+    }
+}
+void pad(char *plaintext, int *length) {
+    int remainder = *length % BLOCK_SIZE;
+    if (remainder != 0) {
+        int padding = BLOCK_SIZE - remainder;
+        *length += padding;
+        memset(plaintext + *length - padding, 0, padding);
+        plaintext[*length - padding - 1] = 1;
+    }
+}
+void ecb_encrypt(char *plaintext, char *ciphertext, char *key) {
+    int length = strlen(plaintext);
+    pad(plaintext, &length);
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        // Simple encryption function (XOR with key)
+        xor_blocks(plaintext + i, key, ciphertext + i);
+    }
+}
+void cbc_encrypt(char *plaintext, char *ciphertext, char *key, char *iv) {
+    int length = strlen(plaintext);
+    pad(plaintext, &length);
+    char previous_block[BLOCK_SIZE];
+    memcpy(previous_block, iv, BLOCK_SIZE);
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        // XOR each block with the previous block's ciphertext
+        xor_blocks(plaintext + i, previous_block, ciphertext + i);
+        // Simple encryption function (XOR with key)
+        xor_blocks(ciphertext + i, key, ciphertext + i);
+        memcpy(previous_block, ciphertext + i, BLOCK_SIZE);
+    }
+}
+void cfb_encrypt(char *plaintext, char *ciphertext, char *key, char *iv) {
+    int length = strlen(plaintext);
+    pad(plaintext, &length);
+    char previous_block[BLOCK_SIZE];
+    memcpy(previous_block, iv, BLOCK_SIZE);
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        // Simple encryption function (XOR with key)
+        xor_blocks(previous_block, key, previous_block);
+        // XOR each block with the encrypted previous block
+        xor_blocks(plaintext + i, previous_block, ciphertext + i);
+        memcpy(previous_block, ciphertext + i, BLOCK_SIZE);
+    }
+}
+int main() {
+    char plaintext[] = "Hello, World!";
+    char ciphertext[BLOCK_SIZE * 2];
+    char key[] = "secretkey";
+    char iv[] = "initialvector";
+    printf("ECB mode:\n");
+    ecb_encrypt(plaintext, ciphertext, key);
+    printf("%s\n", ciphertext);
+    printf("CBC mode:\n");
+    cbc_encrypt(plaintext, ciphertext, key, iv);
+    printf("%s\n", ciphertext);
+    printf("CFB mode:\n");
+    cfb_encrypt(plaintext, ciphertext, key, iv);
+    printf("%s\n", ciphertext);
+    return 0;
+}
