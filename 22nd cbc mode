@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <string.h>
+void sdes_encrypt(char *plaintext, char *ciphertext, char *key) {
+    // S-DES encryption algorithm implementation
+    // (Omitted for brevity)
+}
+void sdes_decrypt(char *ciphertext, char *plaintext, char *key) {
+    // S-DES decryption algorithm implementation
+    // (Omitted for brevity)
+}
+void cbc_encrypt(char *plaintext, char *ciphertext, char *key, char *iv) {
+    int length = strlen(plaintext);
+    char previous_block[8];
+    memcpy(previous_block, iv, 8);
+    for (int i = 0; i < length; i += 8) {
+        // XOR each block with the previous block's ciphertext
+        char temp[8];
+        for (int j = 0; j < 8; j++) {
+            temp[j] = plaintext[i + j] ^ previous_block[j];
+        }
+        sdes_encrypt(temp, ciphertext + i, key);
+        memcpy(previous_block, ciphertext + i, 8);
+    }
+}
+void cbc_decrypt(char *ciphertext, char *plaintext, char *key, char *iv) {
+    int length = strlen(ciphertext);
+    char previous_block[8];
+    memcpy(previous_block, iv, 8);
+    for (int i = 0; i < length; i += 8) {
+        char temp[8];
+        sdes_decrypt(ciphertext + i, temp, key);
+        // XOR each block with the previous block's ciphertext
+        for (int j = 0; j < 8; j++) {
+            plaintext[i + j] = temp[j] ^ previous_block[j];
+        }
+        memcpy(previous_block, ciphertext + i, 8);
+    }
+}
+int main() {
+    char plaintext[] = "Hello, World!";
+    char ciphertext[256];
+    char key[] = "0111111101";
+    char iv[] = "10101010";
+    printf("Plaintext: %s\n", plaintext);
+    cbc_encrypt(plaintext, ciphertext, key, iv);
+    printf("Ciphertext: %s\n", ciphertext);
+    char decrypted[256];
+    cbc_decrypt(ciphertext, decrypted, key, iv);
+    printf("Decrypted: %s\n", decrypted);
+    return 0;
+}
