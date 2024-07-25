@@ -1,0 +1,23 @@
+#include <stdio.h>
+int gcd(int a, int b) {
+    if (b == 0)
+        return a;
+    else
+        return gcd(b, a % b);
+}
+int main() {
+    int n = 3599; 
+    int e = 31; 
+    int plaintext_block = 112; 
+    int gcd_value = gcd(plaintext_block, n);
+    printf("GCD of plaintext block and n: %d\n", gcd_value);
+    if (gcd_value != 1) {
+        int p = gcd_value;
+        int q = n / p;
+        printf("Factored n: p = %d, q = %d\n", p, q);
+    } else {
+        printf("No common factor found\n");
+    }
+    return 0;
+}
+
