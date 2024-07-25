@@ -1,0 +1,23 @@
+#include <stdio.h>
+#include <string.h>
+int rsa_encrypt(int m, int e, int n) {
+    int c = 1;
+    for (int i = 0; i < e; i++) {
+        c = (c * m) % n;
+    }
+    return c;
+}
+void frequency_analysis_attack(char *ciphertext, int e, int n) {
+}
+int main() {
+    int e = 31;
+    int n = 3599;
+    char plaintext[] = "HELLO"; 
+    int encrypted[strlen(plaintext)];
+    for (int i = 0; i < strlen(plaintext); i++) {
+        encrypted[i] = rsa_encrypt(plaintext[i] - 'A', e, n);
+        printf("Encrypted character: %d\n", encrypted[i]);
+    }
+    frequency_analysis_attack((char *)encrypted, e, n);
+    return 0;
+}
