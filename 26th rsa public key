@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <stdlib.h>
+int gcd(int a, int b) {
+    while (b != 0) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+int extended_euclidean(int a, int b, int *x, int *y) {
+    if (a == 0) {
+        *x = 0;
+        *y = 1;
+        return b;
+    }
+    int x1, y1;
+    int gcd = extended_euclidean(b % a, a, &x1, &y1);
+    *x = y1 - (b / a) * x1;
+    *y = x1;
+    return gcd;
+}
+int mod_inverse(int e, int phi) {
+    int x, y;
+    int g = extended_euclidean(e, phi, &x, &y);
+    if (g != 1) return -1; 
+    return (x % phi + phi) % phi;
+}
+int main() {
+    int p = 59; 
+    int q = 61; 
+    int n = p * q;
+    int phi = (p - 1) * (q - 1);
+    int new_e = 37; 
+    int new_d = mod_inverse(new_e, phi);
+    if (new_d == -1) {
+        printf("No modular inverse found.\n");
+    } else {
+        printf("The new private key d is: %d\n", new_d);
+    }
+    return 0;
+}
