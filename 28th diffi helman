@@ -1,0 +1,25 @@
+#include <stdio.h>
+#include <math.h>
+int power_mod(int base, int exp, int mod) {
+    int result = 1;
+    base = base % mod;
+    while (exp > 0) {
+        if (exp % 2 == 1) result = (result * base) % mod;
+        exp = exp >> 1;
+        base = (base * base) % mod;
+    }
+    return result;
+}
+int main() {
+    int a = 5; 
+    int q = 23; 
+    int x = 6;
+    int y = 15; 
+    int A = power_mod(a, x, q);
+    int B = power_mod(a, y, q); 
+    int K1 = power_mod(B, x, q); 
+    int K2 = power_mod(A, y, q); 
+    printf("Shared secret key: %d\n", K1);
+    printf("Shared secret key: %d\n", K2);
+    return 0;
+}
