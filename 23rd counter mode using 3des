@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <string.h>
+void sdes_encrypt(char *plaintext, char *ciphertext, char *key) {
+    // S-DES encryption algorithm implementation
+    // (Omitted for brevity)
+}
+void counter_encrypt(char *plaintext, char *ciphertext, char *key, char *counter) {
+    int length = strlen(plaintext);
+    for (int i = 0; i < length; i += 8) {
+        char counter_block[8];
+        memcpy(counter_block, counter, 8);
+        for (int j = 7; j >= 0; j--) {
+            if (counter_block[j] == '1') {
+                counter_block[j] = '0';
+            } else {
+                counter_block[j] = '1';
+                break;
+            }
+        }
+        char temp[8];
+        sdes_encrypt(counter_block, temp, key);
+        for (int j = 0; j < 8; j++) {
+            ciphertext[i + j] = plaintext[i + j] ^ temp[j];
+        }
+    }
+}
+void counter_decrypt(char *ciphertext, char *plaintext, char *key, char *counter) {
+    int length = strlen(ciphertext);
+    for (int i = 0; i < length; i += 8) {
+        char counter_block[8];
+        memcpy(counter_block, counter, 8);
+        for (int j = 7; j >= 0; j--) {
+            if (counter_block[j] == '1') {
+                counter_block[j] = '0';
+            } else {
+                counter_block[j] = '1';
+                break;
+            }
+        }
+        char temp[8];
+        sdes_encrypt(counter_block, temp, key);
+        for (int j = 0; j < 8; j++) {
+            plaintext[i + j] = ciphertext[i + j] ^ temp[j];
+        }
+    }
+}
+int main() {
+    char plaintext[] = "Hello, World!";
+    char ciphertext[256];
+    char key[] = "0111111101";
+    char counter[] = "00000000";
+    printf("Plaintext: %s\n", plaintext);
+    counter_encrypt(plaintext, ciphertext, key, counter);
+    printf("Ciphertext: %s\n", ciphertext);
+    char decrypted[256];
+    counter_decrypt(ciphertext, decrypted, key, counter);
+    printf("Decrypted: %s\n", decrypted);
+    return 0;
+}
