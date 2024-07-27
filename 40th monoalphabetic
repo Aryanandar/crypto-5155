@@ -1,0 +1,110 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// English letter frequency in percentage (from most to least frequent)
+const float englishFreq[] = {
+    8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 6.966, 0.153,
+    0.772, 4.025, 2.406, 6.749, 7.507, 1.929, 0.095, 5.987, 6.327, 9.056,
+    2.758, 0.978, 2.360, 0.150, 1.974, 0.074
+};
+
+// Struct to hold letter frequency
+typedef struct {
+    char letter;
+    float freq;
+} LetterFreq;
+
+// Function prototypes
+void countLetterFrequency(const char *text, LetterFreq freq[], int length);
+void sortFrequencies(LetterFreq freq[]);
+void generatePossiblePlaintexts(const char *ciphertext, int topN);
+
+int main() {
+    char ciphertext[1000];
+    int topN;
+
+    printf("Enter the ciphertext: ");
+    fgets(ciphertext, sizeof(ciphertext), stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = 0; // Remove newline character
+
+    printf("Enter the number of top possible plaintexts to generate: ");
+    scanf("%d", &topN);
+
+    generatePossiblePlaintexts(ciphertext, topN);
+
+    return 0;
+}
+
+// Function to count the frequency of letters in the ciphertext
+void countLetterFrequency(const char *text, LetterFreq freq[], int length) {
+    int counts[26] = {0};
+    int totalLetters = 0;
+
+    // Count each letter
+    for (int i = 0; i < length; i++) {
+        if (isalpha(text[i])) {
+            counts[toupper(text[i]) - 'A']++;
+            totalLetters++;
+        }
+    }
+
+    // Calculate frequency
+    for (int i = 0; i < 26; i++) {
+        freq[i].letter = 'A' + i;
+        freq[i].freq = (float)counts[i] / totalLetters * 100;
+    }
+}
+
+// Function to compare two LetterFreq structs based on frequency
+int compare(const void *a, const void *b) {
+    LetterFreq *lf1 = (LetterFreq *)a;
+    LetterFreq *lf2 = (LetterFreq *)b;
+    return (lf1->freq < lf2->freq) - (lf1->freq > lf2->freq);
+}
+
+// Function to sort the frequencies in descending order
+void sortFrequencies(LetterFreq freq[]) {
+    qsort(freq, 26, sizeof(LetterFreq), compare);
+}
+
+// Function to generate top N possible plaintexts
+void generatePossiblePlaintexts(const char *ciphertext, int topN) {
+    int length = strlen(ciphertext);
+    LetterFreq textFreq[26];
+    LetterFreq sortedEngFreq[26];
+
+    // Initialize English frequency struct
+    for (int i = 0; i < 26; i++) {
+        sortedEngFreq[i].letter = 'A' + i;
+        sortedEngFreq[i].freq = englishFreq[i];
+    }
+
+    // Count letter frequency in ciphertext
+    countLetterFrequency(ciphertext, textFreq, length);
+
+    // Sort frequencies
+    sortFrequencies(textFreq);
+    sortFrequencies(sortedEngFreq);
+
+    // Generate possible plaintexts
+    for (int i = 0; i < topN; i++) {
+        char tempText[1000];
+        strcpy(tempText, ciphertext);
+        char substitution[26];
+        for (int j = 0; j < 26; j++) {
+            substitution[textFreq[j].letter - 'A'] = sortedEngFreq[(j + i) % 26].letter;
+        }
+
+        // Apply substitution
+        for (int k = 0; k < length; k++) {
+            if (isalpha(tempText[k])) {
+                char c = toupper(tempText[k]);
+                tempText[k] = (isupper(tempText[k]) ? substitution[c - 'A'] : tolower(substitution[c - 'A']));
+            }
+        }
+
+        printf("Possible plaintext %d: %s\n", i + 1, tempText);
+    }
+}
