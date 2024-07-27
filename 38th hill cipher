@@ -1,0 +1,132 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// Function prototypes
+void getKeyMatrix(int keyMatrix[2][2], int *plainText, int *cipherText);
+void invertMatrix(int matrix[2][2], int inverse[2][2]);
+int determinant(int matrix[2][2]);
+int modInverse(int a, int m);
+void multiplyMatrix(int a[2][2], int b[2][2], int result[2][2]);
+void encrypt(int keyMatrix[2][2], char plaintext[2], char ciphertext[2]);
+
+// Helper function to print a matrix
+void printMatrix(int matrix[2][2]) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            printf("%d ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    // Known plaintext-ciphertext pairs
+    char plaintext[4], ciphertext[4];
+    int plainText[4], cipherText[4];
+
+    printf("Enter the 4-letter plaintext: ");
+    scanf("%s", plaintext);
+    printf("Enter the 4-letter ciphertext: ");
+    scanf("%s", ciphertext);
+
+    // Convert chars to integers (A=0, B=1, ..., Z=25)
+    for (int i = 0; i < 4; i++) {
+        plainText[i] = toupper(plaintext[i]) - 'A';
+        cipherText[i] = toupper(ciphertext[i]) - 'A';
+    }
+
+    // Get the key matrix using the known plaintext-ciphertext pairs
+    int keyMatrix[2][2];
+    getKeyMatrix(keyMatrix, plainText, cipherText);
+
+    printf("Recovered key matrix:\n");
+    printMatrix(keyMatrix);
+
+    // Encrypt a sample plaintext to verify the key
+    char samplePlaintext[3], sampleCiphertext[3];
+    printf("Enter a 2-letter plaintext to encrypt: ");
+    scanf("%s", samplePlaintext);
+    encrypt(keyMatrix, samplePlaintext, sampleCiphertext);
+    sampleCiphertext[2] = '\0';
+    printf("Encrypted text: %s\n", sampleCiphertext);
+
+    return 0;
+}
+
+void getKeyMatrix(int keyMatrix[2][2], int *plainText, int *cipherText) {
+    // Construct matrices from plaintext and ciphertext
+    int P[2][2] = { { plainText[0], plainText[1] }, { plainText[2], plainText[3] } };
+    int C[2][2] = { { cipherText[0], cipherText[1] }, { cipherText[2], cipherText[3] } };
+
+    // Calculate the inverse of the plaintext matrix
+    int P_inv[2][2];
+    invertMatrix(P, P_inv);
+
+    // Multiply the inverse of the plaintext matrix by the ciphertext matrix to get the key matrix
+    multiplyMatrix(P_inv, C, keyMatrix);
+}
+
+void invertMatrix(int matrix[2][2], int inverse[2][2]) {
+    int det = determinant(matrix);
+    int detInv = modInverse(det, 26);
+
+    // Adjoint of the matrix
+    inverse[0][0] = matrix[1][1];
+    inverse[0][1] = -matrix[0][1];
+    inverse[1][0] = -matrix[1][0];
+    inverse[1][1] = matrix[0][0];
+
+    // Multiply adjoint by inverse of determinant
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            inverse[i][j] = (inverse[i][j] * detInv) % 26;
+            if (inverse[i][j] < 0) {
+                inverse[i][j] += 26;
+            }
+        }
+    }
+}
+
+int determinant(int matrix[2][2]) {
+    return (matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]) % 26;
+}
+
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1;
+}
+
+void multiplyMatrix(int a[2][2], int b[2][2], int result[2][2]) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            result[i][j] = 0;
+            for (int k = 0; k < 2; k++) {
+                result[i][j] += a[i][k] * b[k][j];
+            }
+            result[i][j] %= 26;
+        }
+    }
+}
+
+void encrypt(int keyMatrix[2][2], char plaintext[2], char ciphertext[2]) {
+    int plainVector[2], cipherVector[2];
+    for (int i = 0; i < 2; i++) {
+        plainVector[i] = toupper(plaintext[i]) - 'A';
+    }
+
+    for (int i = 0; i < 2; i++) {
+        cipherVector[i] = 0;
+        for (int j = 0; j < 2; j++) {
+            cipherVector[i] += keyMatrix[i][j] * plainVector[j];
+        }
+        cipherVector[i] %= 26;
+        ciphertext[i] = cipherVector[i] + 'A';
+    }
+}
