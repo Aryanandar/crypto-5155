@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// English letter frequency in percentage (from most to least frequent)
+const float englishFreq[] = {
+    8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 6.966, 0.153,
+    0.772, 4.025, 2.406, 6.749, 7.507, 1.929, 0.095, 5.987, 6.327, 9.056,
+    2.758, 0.978, 2.360, 0.150, 1.974, 0.074
+};
+
+// Function prototypes
+void countLetterFrequency(const char *text, float freq[]);
+float calculateChiSquared(float observed[], const float expected[]);
+void shiftText(const char *text, char *shiftedText, int shift);
+void performFrequencyAttack(const char *ciphertext, int topN);
+
+int main() {
+    char ciphertext[1000];
+    int topN;
+
+    printf("Enter the ciphertext: ");
+    fgets(ciphertext, sizeof(ciphertext), stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = 0; // Remove newline character
+
+    printf("Enter the number of top possible plaintexts to generate: ");
+    scanf("%d", &topN);
+
+    performFrequencyAttack(ciphertext, topN);
+
+    return 0;
+}
+
+void countLetterFrequency(const char *text, float freq[]) {
+    int counts[26] = {0};
+    int totalLetters = 0;
+
+    // Count each letter
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (isalpha(text[i])) {
+            counts[toupper(text[i]) - 'A']++;
+            totalLetters++;
+        }
+    }
+
+    // Calculate frequency
+    for (int i = 0; i < 26; i++) {
+        freq[i] = (float)counts[i] / totalLetters * 100;
+    }
+}
+
+float calculateChiSquared(float observed[], const float expected[]) {
+    float chiSquared = 0.0;
+    for (int i = 0; i < 26; i++) {
+        if (expected[i] != 0) {
+            chiSquared += ((observed[i] - expected[i]) * (observed[i] - expected[i])) / expected[i];
+        }
+    }
+    return chiSquared;
+}
+
+void shiftText(const char *text, char *shiftedText, int shift) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (isalpha(text[i])) {
+            char base = isupper(text[i]) ? 'A' : 'a';
+            shiftedText[i] = (text[i] - base + shift) % 26 + base;
+        } else {
+            shiftedText[i] = text[i];
+        }
+    }
+    shiftedText[strlen(text)] = '\0';
+}
+
+void performFrequencyAttack(const char *ciphertext, int topN) {
+    float freq[26];
+    char shiftedText[1000];
+    float chiSquared[26];
+
+    // Calculate chi-squared statistics for each shift
+    for (int shift = 0; shift < 26; shift++) {
+        shiftText(ciphertext, shiftedText, shift);
+        countLetterFrequency(shiftedText, freq);
+        chiSquared[shift] = calculateChiSquared(freq, englishFreq);
+    }
+
+    // Find the top N shifts with the smallest chi-squared values
+    int topShifts[topN];
+    for (int i = 0; i < topN; i++) {
+        float minChiSquared = 1e9;
+        int minIndex = -1;
+        for (int shift = 0; shift < 26; shift++) {
+            if (chiSquared[shift] < minChiSquared) {
+                minChiSquared = chiSquared[shift];
+                minIndex = shift;
+            }
+        }
+        topShifts[i] = minIndex;
+        chiSquared[minIndex] = 1e9; // Exclude this shift from further consideration
+    }
+
+    // Output the top N possible plaintexts
+    for (int i = 0; i < topN; i++) {
+        shiftText(ciphertext, shiftedText, topShifts[i]);
+        printf("Possible plaintext %d (shift %d): %s\n", i + 1, topShifts[i], shiftedText);
+    }
+}
