@@ -1,0 +1,98 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define BLOCK_SIZE 8
+#define SEGMENT_SIZE 4
+
+void xor_block(unsigned char *block, const unsigned char *key, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        block[i] ^= key[i];
+    }
+}
+
+void pad_data(unsigned char *data, size_t *length) {
+    size_t pad_len = BLOCK_SIZE - (*length % BLOCK_SIZE);
+    data[*length] = 0x80;  // Adding 1 bit
+    for (size_t i = 1; i < pad_len; i++) {
+        data[*length + i] = 0x00;  // Adding 0 bits
+    }
+    *length += pad_len;
+}
+
+void ecb_encrypt(unsigned char *data, size_t length, const unsigned char *key) {
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        xor_block(data + i, key, BLOCK_SIZE);
+    }
+}
+
+void cbc_encrypt(unsigned char *data, size_t length, const unsigned char *key, unsigned char *iv) {
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        xor_block(data + i, iv, BLOCK_SIZE);
+        xor_block(data + i, key, BLOCK_SIZE);
+        memcpy(iv, data + i, BLOCK_SIZE);
+    }
+}
+
+void cfb_encrypt(unsigned char *data, size_t length, const unsigned char *key, unsigned char *iv) {
+    for (size_t i = 0; i < length; i += SEGMENT_SIZE) {
+        unsigned char segment[BLOCK_SIZE];
+        memcpy(segment, iv, BLOCK_SIZE);
+        xor_block(segment, key, BLOCK_SIZE);
+        xor_block(data + i, segment, SEGMENT_SIZE);
+        memcpy(iv, data + i, SEGMENT_SIZE);
+    }
+}
+
+int main() {
+    unsigned char plaintext[] = "This is a test message!";
+    unsigned char key[BLOCK_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    unsigned char iv[BLOCK_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    unsigned char original_iv[BLOCK_SIZE];
+    memcpy(original_iv, iv, BLOCK_SIZE);
+
+    size_t length = strlen((char *)plaintext);
+    unsigned char *data = (unsigned char *)malloc((length + BLOCK_SIZE) * sizeof(unsigned char));
+    memcpy(data, plaintext, length);
+
+    printf("Original data: %s\n", data);
+
+    pad_data(data, &length);
+    printf("Padded data: ");
+    for (size_t i = 0; i < length; i++) {
+        printf("%02x ", data[i]);
+    }
+    printf("\n");
+
+    printf("ECB mode encryption:\n");
+    ecb_encrypt(data, length, key);
+    for (size_t i = 0; i < length; i++) {
+        printf("%02x ", data[i]);
+    }
+    printf("\n");
+
+    memcpy(data, plaintext, strlen((char *)plaintext));
+    pad_data(data, &length);
+    memcpy(iv, original_iv, BLOCK_SIZE);
+
+    printf("CBC mode encryption:\n");
+    cbc_encrypt(data, length, key, iv);
+    for (size_t i = 0; i < length; i++) {
+        printf("%02x ", data[i]);
+    }
+    printf("\n");
+
+    memcpy(data, plaintext, strlen((char *)plaintext));
+    pad_data(data, &length);
+    memcpy(iv, original_iv, BLOCK_SIZE);
+
+    printf("CFB mode encryption:\n");
+    cfb_encrypt(data, length, key, iv);
+    for (size_t i = 0; i < length; i++) {
+        printf("%02x ", data[i]);
+    }
+    printf("\n");
+
+    free(data);
+    return 0;
+}
