@@ -1,0 +1,33 @@
+
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#define BLOCK_SIZE_64 8
+#define BLOCK_SIZE_128 16
+uint64_t const_Rb_64 = 0x1B;
+uint64_t const_Rb_128 = 0x87;
+void generate_subkey(uint8_t *subkey, uint8_t *input, size_t block_size, uint64_t const_Rb) {
+    int carry = (input[0] & 0x80) != 0;
+    for (size_t i = 0; i < block_size - 1; i++) {
+        subkey[i] = (input[i] << 1) | (input[i + 1] >> 7);
+    }
+    subkey[block_size - 1] = input[block_size - 1] << 1;
+    if (carry) {
+        subkey[block_size - 1] ^= const_Rb;
+    }
+}
+int main() {
+    uint8_t input_64[BLOCK_SIZE_64] = {0};
+    uint8_t input_128[BLOCK_SIZE_128] = {0};
+    uint8_t subkey_64[BLOCK_SIZE_64];
+    uint8_t subkey_128[BLOCK_SIZE_128];
+    generate_subkey(subkey_64, input_64, BLOCK_SIZE_64, const_Rb_64);
+    generate_subkey(subkey_128, input_128, BLOCK_SIZE_128, const_Rb_128);
+    printf("Subkey 64: ");
+    for (int i = 0; i < BLOCK_SIZE_64; i++) printf("%02x", subkey_64[i]);
+    printf("\n");
+    printf("Subkey 128: ");
+    for (int i = 0; i < BLOCK_SIZE_128; i++) printf("%02x", subkey_128[i]);
+    printf("\n");
+    return 0;
+}
