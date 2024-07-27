@@ -1,0 +1,43 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#define LANES 25
+#define CAPACITY_LANES 9 
+#define MESSAGE_BLOCK_SIZE 16 
+uint64_t state[LANES];
+void print_state() {
+    for (int i = 0; i < LANES; i++) {
+        printf("%016lx ", state[i]);
+        if ((i + 1) % 5 == 0) printf("\n");
+    }
+}
+void initialize_state() {
+    for (int i = 0; i < LANES; i++) {
+        state[i] = 0;
+    }
+}
+void process_block(uint64_t *message) {
+    for (int i = 0; i < MESSAGE_BLOCK_SIZE; i++) {
+        state[i] ^= message[i];
+    }
+}
+int main() {
+    initialize_state();
+    uint64_t P0[MESSAGE_BLOCK_SIZE] = {
+        0x0000000000000001, 0x0000000000000002, 0x0000000000000004, 0x0000000000000008,
+        0x0000000000000010, 0x0000000000000020, 0x0000000000000040, 0x0000000000000080,
+        0x0000000000000100, 0x0000000000000200, 0x0000000000000400, 0x0000000000000800,
+        0x0000000000001000, 0x0000000000002000, 0x0000000000004000, 0x0000000000008000
+    };
+    process_block(P0);
+    printf("Initial State:\n");
+    print_state();
+    int non_zero_capacity_lanes = 0;
+    for (int i = 0; i < CAPACITY_LANES; i++) {
+        if (state[LANES - CAPACITY_LANES + i] != 0) {
+            non_zero_capacity_lanes++;
+        }
+    }
+    printf("\nNumber of non-zero capacity lanes: %d\n", non_zero_capacity_lanes);
+    return 0;
+}
